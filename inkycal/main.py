@@ -13,10 +13,9 @@ import traceback
 from logging.handlers import RotatingFileHandler
 
 from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
-from webdriver_manager.chrome import ChromeDriverManager
-from webdriver_manager.core.os_manager import ChromeType
+from selenium.webdriver.chromium.service import Service as service
+from selenium.webdriver.chromium.options import Options
+
 from io import BytesIO
 
 import arrow
@@ -129,12 +128,12 @@ class Inkycal:
 
         #Load and intialize browser with url specified in settings
 
-        options = webdriver.ChromeOptions()
+        options = webdriver.ChromiumOptions()
         options.add_argument('--headless')
         options.add_argument('--no-sandbox')
         options.add_argument('--disable-dev-shm-usage')
 
-        driver = webdriver.Chrome(service=ChromiumService(ChromeDriverManager(chrome_type=ChromeType.CHROMIUM).install()), options=options)
+        driver = webdriver.Chromium('/usr/bin/chromedriver', options=options)
         driver.set_window_size(Display.get_display_size(self.settings["model"]))
 
         start_url = self.settings["mm_address"]
