@@ -17,7 +17,6 @@ import numpy
 
 from inkycal.custom import *
 from inkycal.display import Display
-from inkycal.modules.inky_image import Inkyimage as Images
 
 from PIL import Image
 
@@ -121,31 +120,8 @@ class Inkycal:
             # init calibration state
             self._calibration_state = False
 
-        # Load and intialize modules specified in the settings file
-        self._module_number = 1
-        for module in settings['modules']:
-            module_name = module['name']
-            try:
-                loader = f'from inkycal.modules import {module_name}'
-                # print(loader)
-                exec(loader)
-                setup = f'self.module_{self._module_number} = {module_name}({module})'
-                # print(setup)
-                exec(setup)
-                logger.info(('name : {name} size : {width}x{height} px'.format(
-                    name=module_name,
-                    width=module['config']['size'][0],
-                    height=module['config']['size'][1])))
+        # TODO: Load and intialize browser with url specified in settings
 
-                self._module_number += 1
-
-            # If a module was not found, print an error message
-            except ImportError:
-                print(f'Could not find module: "{module}". Please try to import manually')
-
-            # If something unexpected happened, show the error message
-            except Exception as e:
-                print(str(e))
 
         # Path to store images
         self.image_folder = image_folder
@@ -179,46 +155,6 @@ class Inkycal:
 
         # Return seconds until next update
         return remaining_time
-
-    def test(self):
-        """Tests if Inkycal can run without issues.
-
-        Attempts to import module names from settings file. Loads the config
-        for each module and initializes the module. Tries to run the module and
-        checks if the images could be generated correctly.
-
-        Generated images can be found in the /images folder of Inkycal.
-        """
-
-        print(f'Inkycal version: v{self._release}')
-        print(f'Selected E-paper display: {self.settings["model"]}')
-
-        # store module numbers in here
-        errors = []
-
-        # short info for info-section
-        self.info = f"{arrow.now().format('D MMM @ HH:mm')}  "
-
-        for number in range(1, self._module_number):
-            name = eval(f"self.module_{number}.name")
-            module = eval(f'self.module_{number}')
-            print(f'generating image(s) for {name}...', end="")
-            try:
-                black, colour = module.generate_image()
-                black.save(f"{self.image_folder}module{number}_black.png", "PNG")
-                colour.save(f"{self.image_folder}module{number}_colour.png", "PNG")
-                print('OK!')
-            except:
-                errors.append(number)
-                self.info += f"module {number}: Error!  "
-                print('Error!')
-                print(traceback.format_exc())
-
-        if errors:
-            print('Error/s in modules:', *errors)
-        del errors
-
-        self._assemble()
 
     def _image_hash(self, _in):
         """Create a md5sum of a path or a bytes stream."""
@@ -285,7 +221,6 @@ class Inkycal:
                   f"Time: {current_time.format('HH:mm')}")
             print('Generating images for all modules...', end='')
 
-            errors = []  # store module numbers in here
 
             # short info for info-section
             if not self.settings.get('image_hash', False):
@@ -293,33 +228,37 @@ class Inkycal:
             else:
                 self.info = ""
 
-            for number in range(1, self._module_number):
 
-                # name = eval(f"self.module_{number}.name")
-                module = eval(f'self.module_{number}')
+            #TODO: Generate Image from browser screenshot and save it to image folder
 
-                try:
-                    black, colour = module.generate_image()
-                    black.save(f"{self.image_folder}module{number}_black.png", "PNG")
-                    colour.save(f"{self.image_folder}module{number}_colour.png", "PNG")
-                    self.info += f"module {number}: OK  "
-                except:
-                    errors.append(number)
-                    print('error!')
-                    print(traceback.format_exc())
-                    self.info += f"module {number}: error!  "
-                    logger.exception(f'Exception in module {number}')
 
-            if errors:
-                print('error/s in modules:', *errors)
-                counter = 0
-            else:
-                counter += 1
-                print('successful')
-            del errors
-
-            # Assemble image from each module - add info section if specified
-            self._assemble()
+#            for number in range(1, self._module_number):
+#
+#                # name = eval(f"self.module_{number}.name")
+#                module = eval(f'self.module_{number}')
+#
+#                try:
+#                    black, colour = module.generate_image()
+#                    black.save(f"{self.image_folder}module{number}_black.png", "PNG")
+#                    colour.save(f"{self.image_folder}module{number}_colour.png", "PNG")
+#                    self.info += f"module {number}: OK  "
+#                except:
+#                    errors.append(number)
+#                    print('error!')
+#                    print(traceback.format_exc())
+#                    self.info += f"module {number}: error!  "
+#                    logger.exception(f'Exception in module {number}')
+#
+#            if errors:
+#                print('error/s in modules:', *errors)
+#                counter = 0
+#            else:
+#                counter += 1
+#                print('successful')
+#            del errors
+#
+#            # Assemble image from each module - add info section if specified
+#            self._assemble()
 
             # Check if image should be rendered
             if self.render:
@@ -392,140 +331,6 @@ class Inkycal:
 
         return im1
 
-    def _assemble(self):
-        """Assembles all sub-images to a single image"""
-
-        # Create 2 blank images with the same resolution as the display
-        width, height = Display.get_display_size(self.settings["model"])
-
-        # Since Inkycal runs in vertical mode, switch the height and width
-        width, height = height, width
-
-        im_black = Image.new('RGB', (width, height), color='white')
-        im_colour = Image.new('RGB', (width, height), color='white')
-
-        # Set cursor for y-axis
-        im1_cursor = 0
-        im2_cursor = 0
-
-        for number in range(1, self._module_number):
-
-            # get the path of the current module's generated images
-            im1_path = f"{self.image_folder}module{number}_black.png"
-            im2_path = f"{self.image_folder}module{number}_colour.png"
-
-            # Check if there is an image for the black band
-            if os.path.exists(im1_path):
-
-                # Get actual size of image
-                im1 = Image.open(im1_path).convert('RGBA')
-                im1_size = im1.size
-
-                # Get the size of the section
-                section_size = [i for i in self.settings['modules'] if i['position'] == number][0]['config']['size']
-
-                # Calculate coordinates to center the image
-                x = int((section_size[0] - im1_size[0]) / 2)
-
-                # If this is the first module, use the y-offset
-                if im1_cursor == 0:
-                    y = int((section_size[1] - im1_size[1]) / 2)
-                else:
-                    y = im1_cursor + int((section_size[1] - im1_size[1]) / 2)
-
-                # center the image in the section space
-                im_black.paste(im1, (x, y), im1)
-
-                # Shift the y-axis cursor at the beginning of next section
-                im1_cursor += section_size[1]
-
-            # Check if there is an image for the coloured band
-            if os.path.exists(im2_path):
-
-                # Get actual size of image
-                im2 = Image.open(im2_path).convert('RGBA')
-                im2_size = im2.size
-
-                # Get the size of the section
-                section_size = [i for i in self.settings['modules'] if i['position'] == number][0]['config']['size']
-
-                # Calculate coordinates to center the image
-                x = int((section_size[0] - im2_size[0]) / 2)
-
-                # If this is the first module, use the y-offset
-                if im2_cursor == 0:
-                    y = int((section_size[1] - im2_size[1]) / 2)
-                else:
-                    y = im2_cursor + int((section_size[1] - im2_size[1]) / 2)
-
-                # center the image in the section space
-                im_colour.paste(im2, (x, y), im2)
-
-                # Shift the y-axis cursor at the beginning of next section
-                im2_cursor += section_size[1]
-
-        # Add info-section if specified --
-
-        # Calculate the max. fontsize for info-section
-        if self.settings['info_section']:
-            info_height = self.settings["info_section_height"]
-            info_width = width
-            font = self.font = ImageFont.truetype(
-                fonts['NotoSansUI-Regular'], size=14)
-
-            info_x = im_black.size[1] - info_height
-            write(im_black, (0, info_x), (info_width, info_height),
-                  self.info, font=font)
-
-        # optimize the image by mapping colours to pure black and white
-        if self.optimize:
-            im_black = self._optimize_im(im_black)
-            im_colour = self._optimize_im(im_colour)
-
-        im_black.save(self.image_folder + 'canvas.png', 'PNG')
-        im_colour.save(self.image_folder + 'canvas_colour.png', 'PNG')
-
-        # Additionally, combine the two images with color
-        def clear_white(img):
-            """Replace all white pixels from image with transparent pixels
-            """
-            x = numpy.asarray(img.convert('RGBA')).copy()
-            x[:, :, 3] = (255 * (x[:, :, :3] != 255).any(axis=2)).astype(numpy.uint8)
-            return Image.fromarray(x)
-
-        # Additionally, combine the two images with color
-        def black_to_colour(img):
-            """Replace all black pixels from image with red pixels
-            """
-            buffer = numpy.array(img.convert('RGB'))
-            red, green = buffer[:, :, 0], buffer[:, :, 1]
-
-            threshold = 220
-
-            # non-white -> red
-            buffer[numpy.logical_and(red <= threshold, green <= threshold)] = [255, 0, 0]
-
-            return Image.fromarray(buffer)
-
-        # Save full-screen images as well
-        im_black = clear_white(im_black)
-        im_colour = black_to_colour(im_colour)
-
-        im_colour.paste(im_black, (0, 0), im_black)
-        im_colour.save(image_folder + 'full-screen.png', 'PNG')
-
-    @staticmethod
-    def _optimize_im(image, threshold=220):
-        """Optimize the image for rendering on ePaper displays"""
-
-        buffer = numpy.array(image.convert('RGB'))
-        red, green = buffer[:, :, 0], buffer[:, :, 1]
-
-        # grey->black
-        buffer[numpy.logical_and(red <= threshold, green <= threshold)] = [0, 0, 0]
-        image = Image.fromarray(buffer)
-        return image
-
     def calibrate(self):
         """Calibrate the E-Paper display
 
@@ -546,187 +351,6 @@ class Inkycal:
             self._calibration_state = True
         else:
             self._calibration_state = False
-
-    @classmethod
-    def add_module(cls, filepath):
-        """registers a third party module for inkycal.
-
-        Uses the full filepath of the third party module to check if it is inside
-        the correct folder, then checks if it's an inkycal module. Lastly, the
-        init files in /inkycal and /inkycal/modules are updated to allow using
-        the new module.
-
-        Args:
-          - filepath: The full filepath of the third party module. Modules should be
-            in Inkycal/inkycal/modules.
-
-        Usage:
-          - download a third-party module. The exact link is provided by the
-            developer of that module and starts with
-            `https://raw.githubusercontent.com/...`
-
-            enter the following in bash to download a module::
-
-              $ cd Inkycal/inkycal/modules #navigate to modules folder in inkycal
-              $ wget https://raw.githubusercontent.com/...     #download the module
-
-            then register it with this function::
-
-              >>> from inkycal import Inkycal
-              >>> Inkycal.add_module('/full/path/to/the/module/in/inkycal/modules.py')
-        """
-
-        module_folder = top_level + '/inkycal/modules'
-
-        if module_folder in filepath:
-            filename = filepath.split('.py')[0].split('/')[-1]
-
-            # Extract name of class from given module and validate if it's an inkycal
-            # module
-            with open(filepath, mode='r') as module:
-                module_content = module.read().splitlines()
-
-            for line in module_content:
-                if '(inkycal_module):' in line:
-                    classname = line.split(' ')[-1].split('(')[0]
-                    break
-
-            if not classname:
-                raise TypeError("your module doesn't seem to be a correct inkycal module.."
-                                "Please check your module again.")
-
-            # Check if filename or classname exists in init of module folder
-            with open(module_folder + '/__init__.py', mode='r') as file:
-                module_init = file.read().splitlines()
-
-            print('checking module init file..')
-            for line in module_init:
-                if filename in line:
-                    raise Exception(
-                        "A module with this filename already exists! \n"
-                        "Please consider renaming your module and try again."
-                    )
-                if classname in line:
-                    raise Exception(
-                        "A module with this classname already exists! \n"
-                        "Please consider renaming your class and try again."
-                    )
-            print('OK!')
-
-            # Check if filename or classname exists in init of inkycal folder
-            with open(top_level + '/inkycal/__init__.py', mode='r') as file:
-                inkycal_init = file.read().splitlines()
-
-            print('checking inkycal init file..')
-            for line in inkycal_init:
-                if filename in line:
-                    raise Exception(
-                        "A module with this filename already exists! \n"
-                        "Please consider renaming your module and try again."
-                    )
-                if classname in line:
-                    raise Exception(
-                        "A module with this classname already exists! \n"
-                        "Please consider renaming your class and try again."
-                    )
-            print('OK')
-
-            # If all checks have passed, add the module in the module init file
-            with open(module_folder + '/__init__.py', mode='a') as file:
-                file.write(f'from .{filename} import {classname} # Added by module adder')
-
-            # If all checks have passed, add the module in the inkycal init file
-            with open(top_level + '/inkycal/__init__.py', mode='a') as file:
-                file.write(f'import inkycal.modules.{filename} # Added by module adder')
-
-            print(f"Your module '{filename}' with class '{classname}' has been added "
-                  "successfully! Hooray!")
-            return
-
-        # Check if module is inside the modules folder
-        raise Exception(f"Your module should be in {module_folder} "
-                        f"but is currently in {filepath}")
-
-    @classmethod
-    def remove_module(cls, filename, remove_file=True):
-        """unregisters an inkycal module.
-
-        Looks for given filename.py in /modules folder, removes entries of that
-        module in init files inside /inkycal and /inkycal/modules
-
-        Args:
-          - filename: The filename (with .py ending) of the module which should be
-            unregistered. e.g. `'mymodule.py'`
-          - remove_file: ->bool (True/False). If set to True, the module is deleted
-            after unregistering it, else it remains in the /modules folder
-
-
-        Usage:
-          - Look for the module in Inkycal/inkycal/modules which should be removed.
-            Only the filename (with .py) is required, not the full path.
-
-            Use this function to unregister the module from inkycal::
-
-              >>> from inkycal import Inkycal
-              >>> Inkycal.remove_module('mymodule.py')
-        """
-
-        module_folder = top_level + '/inkycal/modules'
-
-        # Check if module is inside the modules folder and extract classname
-        try:
-            with open(f"{module_folder}/{filename}", mode='r') as file:
-                module_content = file.read().splitlines()
-
-                for line in module_content:
-                    if '(inkycal_module):' in line:
-                        classname = line.split(' ')[-1].split('(')[0]
-                        break
-
-                if not classname:
-                    print('The module you are trying to remove is not an inkycal module.. '
-                          'Not removing it.')
-                    return
-
-        except FileNotFoundError:
-            print(f"No module named {filename} found in {module_folder}")
-            return
-
-        filename = filename.split('.py')[0]
-
-        # Create a memory backup of /modules init file
-        with open(module_folder + '/__init__.py', mode='r') as file:
-            module_init = file.read().splitlines()
-
-        print('removing line from module_init')
-        # Remove lines that contain classname
-        with open(module_folder + '/__init__.py', mode='w') as file:
-            for line in module_init:
-                if not classname in line:
-                    file.write(line + '\n')
-                else:
-                    print('found, removing')
-
-        # Create a memory backup of inkycal init file
-        with open(f"{top_level}/inkycal/__init__.py", mode='r') as file:
-            inkycal_init = file.read().splitlines()
-
-        print('removing line from inkycal init')
-        # Remove lines that contain classname
-        with open(f"{top_level}/inkycal/__init__.py", mode='w') as file:
-            for line in inkycal_init:
-                if filename in line:
-                    print('found, removing')
-                else:
-                    file.write(line + '\n')
-
-        # remove the file of the third party module if it exists and remove_file
-        # was set to True (default)
-        if os.path.exists(f"{module_folder}/{filename}.py") and remove_file is True:
-            print('deleting module file')
-            os.remove(f"{module_folder}/{filename}.py")
-
-        print(f"Your module '{filename}' with class '{classname}' was removed.")
 
 
 if __name__ == '__main__':
