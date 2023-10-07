@@ -12,6 +12,10 @@ import json
 import traceback
 from logging.handlers import RotatingFileHandler
 
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from io import BytesIO
+
 import arrow
 import numpy
 
@@ -120,8 +124,19 @@ class Inkycal:
             # init calibration state
             self._calibration_state = False
 
-        # TODO: Load and intialize browser with url specified in settings
+        #Load and intialize browser with url specified in settings
+        service = Service('/usr/bin/chromedriver')
 
+        options = webdriver.ChromeOptions()
+        options.add_argument('--headless')
+        options.add_argument('--no-sandbox')
+        options.add_argument('--disable-dev-shm-usage')
+
+        driver = webdriver.Chrome(service=service, options=options)
+        driver.set_window_size(Display.get_display_size(self.settings["model"]))
+
+        start_url = self.settings["mm_address"]
+        driver.get(start_url)
 
         # Path to store images
         self.image_folder = image_folder
@@ -229,36 +244,11 @@ class Inkycal:
                 self.info = ""
 
 
-            #TODO: Generate Image from browser screenshot and save it to image folder
+            #Generate Image from browser screenshot and save it to image folder
+            img = Image.open(BytesIO(driver.get_screenshot_as_png()))
+            img.save(self.image_folder + 'canvas.png', 'PNG')
+            img.save(self.image_folder + 'canvas_colour.png', 'PNG')
 
-
-#            for number in range(1, self._module_number):
-#
-#                # name = eval(f"self.module_{number}.name")
-#                module = eval(f'self.module_{number}')
-#
-#                try:
-#                    black, colour = module.generate_image()
-#                    black.save(f"{self.image_folder}module{number}_black.png", "PNG")
-#                    colour.save(f"{self.image_folder}module{number}_colour.png", "PNG")
-#                    self.info += f"module {number}: OK  "
-#                except:
-#                    errors.append(number)
-#                    print('error!')
-#                    print(traceback.format_exc())
-#                    self.info += f"module {number}: error!  "
-#                    logger.exception(f'Exception in module {number}')
-#
-#            if errors:
-#                print('error/s in modules:', *errors)
-#                counter = 0
-#            else:
-#                counter += 1
-#                print('successful')
-#            del errors
-#
-#            # Assemble image from each module - add info section if specified
-#            self._assemble()
 
             # Check if image should be rendered
             if self.render:
@@ -289,7 +279,7 @@ class Inkycal:
                 # Part for black-white ePapers
                 elif not self.supports_colour:
 
-                    im_black = self._merge_bands()
+                    #im_black = self._merge_bands()
 
                     # Flip the image by 180° if required
                     if self.settings['orientation'] == 180:
