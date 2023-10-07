@@ -13,13 +13,10 @@ import traceback
 from logging.handlers import RotatingFileHandler
 
 from selenium import webdriver
-from selenium.webdriver.chromium.service import Service as service
-from selenium.webdriver.chromium.options import Options
-
+from selenium.webdriver.chrome.options import Options
 from io import BytesIO
 
 import arrow
-import numpy
 
 from inkycal.custom import *
 from inkycal.display import Display
@@ -127,13 +124,12 @@ class Inkycal:
             self._calibration_state = False
 
         #Load and intialize browser with url specified in settings
-
-        options = webdriver.ChromiumOptions()
+        options = Options()
+        options.BinaryLocation = "/usr/bin/chromium-browser"
         options.add_argument('--headless')
         options.add_argument('--no-sandbox')
         options.add_argument('--disable-dev-shm-usage')
-
-        driver = webdriver.Chromium('/usr/bin/chromedriver', options=options)
+        driver = webdriver.Chrome(executable_path="/usr/bin/chromedriver",options=options)
         driver.set_window_size(Display.get_display_size(self.settings["model"]))
 
         start_url = self.settings["mm_address"]
