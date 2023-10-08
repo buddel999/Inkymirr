@@ -109,13 +109,13 @@ int main(int argc, char *argv[])
     }
     Debug("A2 Mode:%d\r\n", A2_Mode);
 
-	EPD_IT8951_Clear_Refresh(Dev_Info, Init_Target_Memory_Addr, INIT_Mode);
+	//EPD_IT8951_Clear_Refresh(Dev_Info, Init_Target_Memory_Addr, INIT_Mode);
 
 
 #if(SHOW_BMP)
     //Show a bmp file
     //1bp use A2 mode by default, before used it, refresh the screen with WHITE
-    Display_BMP_Example(Panel_Width, Panel_Height, Init_Target_Memory_Addr, BitsPerPixel_4, argv[3]);
+    //Display_BMP_Example(Panel_Width, Panel_Height, Init_Target_Memory_Addr, BitsPerPixel_4, argv[3]);
     //EPD_IT8951_Clear_Refresh(Dev_Info, Init_Target_Memory_Addr, GC16_Mode);
     
     if( strcmp(argv[3], "test") == 0){
@@ -125,7 +125,7 @@ int main(int argc, char *argv[])
         Display_BMP_Example(Panel_Width, Panel_Height, Init_Target_Memory_Addr, BitsPerPixel_4, Path);
     }else{
         Debug("Loading BMP File \r\n");
-        Display_BMP_Example(Panel_Width, Panel_Height, Init_Target_Memory_Addr, BitsPerPixel_4, argv[3]);
+        Display_BMP_Example(Panel_Width, Panel_Height, Init_Target_Memory_Addr, BitsPerPixel_4, argv[3], true);
     }
         
 #endif

@@ -108,10 +108,10 @@ class Inkycal:
         options.add_argument('--headless')
         options.add_argument('--no-sandbox')
         options.add_argument('--disable-dev-shm-usage')
-        
+        self.driver = webdriver.Chrome(service=service, options=options)
 
         start_url = self.settings["mm_address"]
-        driver.get(start_url)
+        self.driver.get(start_url)
 
         # Path to store images
         self.image_folder = image_folder
@@ -220,10 +220,9 @@ class Inkycal:
 
 
             #Generate Image from browser screenshot and save it to image folder
-            img = Image.open(BytesIO(driver.get_screenshot_as_png()))
+            img = Image.open(BytesIO(self.driver.get_screenshot_as_png()))
             img.save(self.image_folder + 'canvas.png', 'PNG')
             img.save(self.image_folder + 'canvas_colour.png', 'PNG')
-
 
             # Check if image should be rendered
             if self.render:
@@ -255,6 +254,7 @@ class Inkycal:
                 elif not self.supports_colour:
 
                     #im_black = self._merge_bands()
+                    im_black = Image.open(f"{self.image_folder}canvas.png")
 
                     # Flip the image by 180° if required
                     if self.settings['orientation'] == 180:

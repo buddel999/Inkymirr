@@ -13,7 +13,7 @@ EPD_WIDTH = 1200
 EPD_HEIGHT = 825
 
 # Please insert VCOM of your display. The Minus sign before is not required
-VCOM = "2.0"
+VCOM = "1.81"
 
 driver_dir = top_level + '/inkycal/display/drivers/parallel_drivers/'
 

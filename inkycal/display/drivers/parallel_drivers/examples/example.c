@@ -184,7 +184,7 @@ parameter:
     Init_Target_Memory_Addr: Memory address of IT8951 target memory address
     BitsPerPixel: Bits Per Pixel, 2^BitsPerPixel = grayscale
 ******************************************************************************/
-UBYTE Display_BMP_Example(UWORD Panel_Width, UWORD Panel_Height, UDOUBLE Init_Target_Memory_Addr, UBYTE BitsPerPixel, char *Path){
+UBYTE Display_BMP_Example(UWORD Panel_Width, UWORD Panel_Height, UDOUBLE Init_Target_Memory_Addr, UBYTE BitsPerPixel, char *Path, bool Hold){
     UWORD WIDTH;
     if(Four_Byte_Align == true){
         WIDTH  = Panel_Width - (Panel_Width % 32);
@@ -219,17 +219,17 @@ UBYTE Display_BMP_Example(UWORD Panel_Width, UWORD Panel_Height, UDOUBLE Init_Ta
     switch(BitsPerPixel){
         case BitsPerPixel_8:{
             Paint_DrawString_EN(10, 10, "8 bits per pixel 16 grayscale", &Font24, 0xF0, 0x00);
-            EPD_IT8951_8bp_Refresh(Refresh_Frame_Buf, 0, 0, WIDTH,  HEIGHT, false, Init_Target_Memory_Addr);
+            EPD_IT8951_8bp_Refresh(Refresh_Frame_Buf, 0, 0, WIDTH,  HEIGHT, Hold, Init_Target_Memory_Addr);
             break;
         }
         case BitsPerPixel_4:{
             //Paint_DrawString_EN(10, 10, "4 bits per pixel 16 grayscale", &Font24, 0xF0, 0x00);
-            EPD_IT8951_4bp_Refresh(Refresh_Frame_Buf, 0, 0, WIDTH,  HEIGHT, false, Init_Target_Memory_Addr,false);
+            EPD_IT8951_4bp_Refresh(Refresh_Frame_Buf, 0, 0, WIDTH,  HEIGHT, Hold, Init_Target_Memory_Addr,false);
             break;
         }
         case BitsPerPixel_2:{
             Paint_DrawString_EN(10, 10, "2 bits per pixel 4 grayscale", &Font24, 0xC0, 0x00);
-            EPD_IT8951_2bp_Refresh(Refresh_Frame_Buf, 0, 0, WIDTH,  HEIGHT, false, Init_Target_Memory_Addr,false);
+            EPD_IT8951_2bp_Refresh(Refresh_Frame_Buf, 0, 0, WIDTH,  HEIGHT, Hold, Init_Target_Memory_Addr,false);
             break;
         }
         case BitsPerPixel_1:{
@@ -867,7 +867,7 @@ void Color_Test(IT8951_Dev_Info Dev_Info, UDOUBLE Init_Target_Memory_Addr)
 			Paint_DrawString_EN(1000, 600, "Hello, World!", &Font24, 0x0a5a, 0x0fff);
 			Paint_DrawString_EN(1000, 700, "Hello, World!", &Font24, 0x05aa, 0x0fff);
 
-			Paint_DrawString_CN(700, 400, "ÄãºÃ Î¢Ñ©µç×Ó", &Font24CN, 0x00fa, 0x0000);
+			Paint_DrawString_CN(700, 400, "ï¿½ï¿½ï¿½ Î¢Ñ©ï¿½ï¿½ï¿½ï¿½", &Font24CN, 0x00fa, 0x0000);
 			Paint_DrawNum(700, 500, 123456789, &Font24, 0x0a0f, 0x0fff);
 			Paint_DrawTime(700, 600, &Time, &Font24, 0x0fa0, 0x0fff);
 		}else {
