@@ -3,7 +3,7 @@ Inkycal ePaper driving functions
 Copyright by aceisace
 """
 import os
-import logging
+
 from importlib import import_module
 from PIL import Image
 
@@ -174,7 +174,6 @@ class Display:
             driver = import_driver(model_name)
             return driver.EPD_WIDTH, driver.EPD_HEIGHT
         except Exception as e:
-            logging.error(f'Failed to load driver for ${model_name}. Check spelling?')
             raise e;
 
     @classmethod

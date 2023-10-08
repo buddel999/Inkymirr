@@ -5,14 +5,11 @@ Inkycal custom-functions for ease-of-use
 
 Copyright by aceinnolab
 """
-import logging
 from PIL import Image, ImageDraw, ImageFont, ImageColor
 from urllib.request import urlopen
 import os
 import time
 
-logs = logging.getLogger(__name__)
-logs.setLevel(level=logging.INFO)
 
 # Get the path to the Inkycal folder
 top_level = os.path.dirname(

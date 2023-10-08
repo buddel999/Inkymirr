@@ -10,7 +10,6 @@ import glob
 import hashlib
 import json
 import traceback
-from logging.handlers import RotatingFileHandler
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -26,35 +25,13 @@ from PIL import Image
 
 # On the console, set a logger to show only important logs
 # (level ERROR or higher)
-stream_handler = logging.StreamHandler()
-stream_handler.setLevel(logging.ERROR)
 
 
 
 if not os.path.exists(f'{top_level}/logs'):
     os.mkdir(f'{top_level}/logs')
 
-# Save all logs to a file, which contains more detailed output
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s | %(name)s |  %(levelname)s: %(message)s',
-    datefmt='%d-%m-%Y %H:%M:%S',
-    handlers=[
 
-        stream_handler,  # add stream handler from above
-
-        RotatingFileHandler(  # log to a file too
-            f'{top_level}/logs/inkycal.log',  # file to log
-            maxBytes=2097152,  # 2MB max filesize
-            backupCount=5  # create max 5 log files
-        )
-    ]
-)
-
-# Show less logging for PIL module
-logging.getLogger("PIL").setLevel(logging.WARNING)
-
-logger = logging.getLogger(__name__)
 
 
 # TODO: autostart -> supervisor?
@@ -131,8 +108,7 @@ class Inkycal:
         options.add_argument('--headless')
         options.add_argument('--no-sandbox')
         options.add_argument('--disable-dev-shm-usage')
-        driver = webdriver.Chrome(service=service,options=options)
-        driver.set_window_size(Display.get_display_size(self.settings["model"]))
+        
 
         start_url = self.settings["mm_address"]
         driver.get(start_url)
