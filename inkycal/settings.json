@@ -6,6 +6,6 @@
     "info_section": true,
     "info_section_height": 70,
     "calibration_hours": [0, 6, 13, 18],
-    "mm_address" : "localhost:8080"
+    "mm_address" : "https://www.timeanddate.com/worldclock/germany"
 }
 

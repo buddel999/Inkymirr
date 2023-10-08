@@ -110,6 +110,9 @@ class Inkycal:
         options.add_argument('--disable-dev-shm-usage')
         self.driver = webdriver.Chrome(service=service, options=options)
 
+        width, height = self.Display.get_display_size(settings['model'])
+        self.driver.set_window_size(height, width)
+
         start_url = self.settings["mm_address"]
         self.driver.get(start_url)
 
